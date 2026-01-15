@@ -1,1 +1,175 @@
 
+# Cloud Run Functions: Qwik Start - Command Line
+
+## Project Overview
+This project demonstrates the creation, deployment, and testing of a serverless Cloud Run function using Google Cloud's command-line interface. The function is triggered by Pub/Sub events and processes messages in real-time, showcasing event-driven architecture in Google Cloud Platform.
+
+## Lab Objectives
+- Create a Node.js Cloud Run function that responds to Pub/Sub events
+- Deploy the function using Google Cloud Shell CLI
+- Test the function by publishing messages to a Pub/Sub topic
+- View and analyze function execution logs
+- Understand serverless, event-driven computing concepts
+
+## Solution/Approach
+
+### Architecture Flow
+1. **Event Trigger**: Pub/Sub topic (`cf-demo`) receives messages
+2. **Function Activation**: Cloud Run function (`nodejs-pubsub-function`) automatically triggers
+3. **Message Processing**: Function decodes and processes Base64-encoded Pub/Sub messages
+4. **Log Output**: Processed messages are written to Cloud Logging
+
+### Implementation Steps
+
+#### 1. Function Creation
+- Created a Node.js function using the `@google-cloud/functions-framework`
+- Implemented a CloudEvent handler for Pub/Sub messages
+- Configured package.json with necessary dependencies
+
+#### 2. Deployment Configuration
+- Used Cloud Run (2nd generation) for deployment
+- Configured Pub/Sub topic (`cf-demo`) as the trigger
+- Set runtime environment to Node.js 20
+- Configured service account for execution permissions
+
+#### 3. Testing Strategy
+- Published test messages to the Pub/Sub topic
+- Verified function execution through Cloud Logging
+- Confirmed message processing and transformation
+
+## Key Configurations
+
+### Function Code (`index.js`)
+```javascript
+const functions = require('@google-cloud/functions-framework');
+
+functions.cloudEvent('helloPubSub', cloudEvent => {
+  const base64name = cloudEvent.data.message.data;
+  const name = base64name
+    ? Buffer.from(base64name, 'base64').toString()
+    : 'World';
+  console.log(`Hello, ${name}!`);
+});
+```
+
+### Deployment Command
+```bash
+gcloud functions deploy nodejs-pubsub-function \
+  --gen2 \
+  --runtime=nodejs20 \
+  --region=us-east1 \
+  --source=. \
+  --entry-point=helloPubSub \
+  --trigger-topic cf-demo \
+  --stage-bucket [BUCKET_NAME] \
+  --service-account [SERVICE_ACCOUNT] \
+  --allow-unauthenticated
+```
+
+### Package Configuration (`package.json`)
+```json
+{
+  "name": "gcf_hello_world",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.0.0"
+  }
+}
+```
+
+## Screenshots/Diagrams
+
+
+### Architecture Diagram
+```
+┌─────────────────┐    Pub/Sub Message    ┌──────────────────┐
+│   Publisher     │ ────────────────────► │   Pub/Sub Topic  │
+│  (gcloud CLI)   │                       │    (cf-demo)     │
+└─────────────────┘                       └────────┬─────────┘
+                                                   │ Trigger
+                                                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 Cloud Run Function                          │
+│           (nodejs-pubsub-function)                          │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │  Event Handler:                                     │   │
+│  │  1. Receive CloudEvent                             │   │
+│  │  2. Decode Base64 message                          │   │
+│  │  3. Log "Hello, [message]!"                        │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                                                   │
+                                                   │ Write Logs
+                                                   ▼
+                                        ┌────────────────────┐
+                                        │   Cloud Logging    │
+                                        └────────────────────┘
+```
+
+### Expected Output Examples
+```
+Cloud Shell Output:
+$ gcloud pubsub topics publish cf-demo --message="Cloud Function Gen2"
+messageIds:
+- '11927162971409664'
+
+Log Output:
+LEVEL: 
+NAME: nodejs-pubsub-function
+EXECUTION_ID: h4v6akxf4sxt
+TIME_UTC: 2024-08-05 15:15:25.723
+LOG: Hello, Cloud Function Gen2!
+```
+
+## Cross-Platform Resources & Documentation
+
+### Google Cloud Documentation
+- [Cloud Run Functions Overview](https://cloud.google.com/functions/docs/concepts/cloud-functions)
+- [Pub/Sub Triggers for Cloud Functions](https://cloud.google.com/functions/docs/calling/pubsub)
+- [gcloud functions deploy Reference](https://cloud.google.com/sdk/gcloud/reference/functions/deploy)
+
+### AWS Equivalent Service
+For AWS developers, this lab demonstrates concepts similar to:
+- **AWS Lambda with EventBridge/SQS Triggers**
+- **AWS Lambda Functions** - Serverless compute service
+- **Amazon SNS/SQS** - Messaging services for event-driven architectures
+
+### AWS Documentation References
+- [AWS Lambda Getting Started](https://docs.aws.amazon.com/lambda/latest/dg/getting-started.html)
+- [Using AWS Lambda with Amazon SNS](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
+- [Event-driven architectures on AWS](https://aws.amazon.com/event-driven-architecture/)
+
+### Key Differences: Google Cloud Run vs AWS Lambda
+| Feature | Google Cloud Run Functions | AWS Lambda |
+|---------|---------------------------|------------|
+| Trigger Types | HTTP, Pub/Sub, Storage | 200+ event sources |
+| Runtime Support | Limited languages | Extensive runtime support |
+| Cold Start | Varies by runtime | Typically 100ms-1s |
+| Pricing | Per request + compute time | Per request + duration |
+| Max Duration | 60 minutes (default) | 15 minutes |
+
+### Best Practices Demonstrated
+1. **Separation of Concerns**: Event handling separate from business logic
+2. **Idempotent Design**: Functions handle duplicate messages safely
+3. **Logging Strategy**: Structured logging for monitoring and debugging
+4. **Security**: Service account permissions for least privilege access
+5. **Infrastructure as Code**: CLI commands for reproducible deployments
+
+### Troubleshooting Tips
+- If logs don't appear immediately, wait 5-10 minutes for propagation
+- Verify Pub/Sub topic exists before function deployment
+- Check service account permissions if deployment fails
+- Ensure Node.js version compatibility (Node.js 20 used in this lab)
+
+## Next Steps & Advanced Concepts
+- Implement error handling and retry mechanisms
+- Add integration with other GCP services (Firestore, BigQuery)
+- Set up monitoring and alerting with Cloud Monitoring
+- Implement CI/CD pipeline for automated deployments
+- Explore traffic splitting and canary deployments
+- Configure concurrency controls and scaling parameters
+
+---
+
