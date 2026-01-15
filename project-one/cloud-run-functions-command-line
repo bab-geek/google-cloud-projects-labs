@@ -1,4 +1,4 @@
-
+```markdown
 # Cloud Run Functions: Qwik Start - Command Line
 
 ## Project Overview
@@ -79,7 +79,6 @@ gcloud functions deploy nodejs-pubsub-function \
 ```
 
 ## Screenshots/Diagrams
-
 
 ### Architecture Diagram
 ```
@@ -172,4 +171,8 @@ For AWS developers, this lab demonstrates concepts similar to:
 - Configure concurrency controls and scaling parameters
 
 ---
+
+*This lab demonstrates fundamental serverless concepts that are transferable across cloud platforms. While implementation details vary, the core principles of event-driven, scalable, and cost-efficient computing remain consistent.*
+```
+
 
